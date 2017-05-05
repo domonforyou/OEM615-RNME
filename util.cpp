@@ -1,6 +1,176 @@
 #include "util.h"
 #include "Gnss_nav.h"
 
+/** @internal
+ * Holds the current configuration of the gateway */
+static s_config config;
+
+/** @internal
+ The different configuration options */
+typedef enum {
+    oBadOption,
+    oLogFile,
+	oMinSec,
+	oMinSat
+} OpCodes;
+
+/** @internal
+ The config file keywords for the different configuration options */
+static const struct {
+    const char *name;
+    OpCodes opcode;
+} keywords[] = {
+	{"logfile", oLogFile}, 
+	{"min_sec", oMinSec},
+	{"min_sat", oMinSat},
+	{NULL, oBadOption}
+  };
+
+/** Accessor for the current gateway configuration
+@return:  A pointer to the current config.  The pointer isn't opaque, but should be treated as READ-ONLY
+ */
+s_config *
+config_get_config(void)
+{
+    return &config;
+}
+
+/** Sets the default config parameters and initialises the configuration system */
+void
+config_init(void)
+{
+	config.confile = DEFAULT_CONFILE;
+    strcpy(config.logfile, DEFAULT_LOGFILE);
+    config.min_sec = DEFAULT_MIN_SEC;
+	config.min_sat = DEFAULT_MIN_SAT;
+}
+
+/**
+ * If the command-line didn't provide a config, use the default.
+ */
+void
+config_init_override(void)
+{
+}
+
+/** @internal
+Parses a single token from the config file
+*/
+static OpCodes
+config_parse_token(const char *cp, const char *filename, int linenum)
+{
+    int i;
+
+    for (i = 0; keywords[i].name; i++)
+        if (stricmp(cp, keywords[i].name) == 0)
+            return keywords[i].opcode;
+
+    printf("%s: line %d: Bad configuration option: %s \n", filename, linenum, cp);
+    return oBadOption;
+}
+
+/**
+@param filename Full path of the configuration file to be read 
+*/
+void config_read(const char *filename)
+{
+	FILE *fd;
+	char line[MAX_BUF], *s, *p1, *p2, *rawarg = NULL;
+	int linenum = 0, opcode, value;
+	size_t len;
+
+	//printf("Reading configuration file '%s' \n", filename);
+
+	if (!(fd = fopen(filename, "r"))) {
+		printf("Could not open configuration file '%s \n', " "exiting... \n", filename);
+		Sleep(5000);
+		exit(1);
+	}
+
+	while (!feof(fd) && fgets(line, MAX_BUF, fd)) {
+		linenum++;
+		s = line;
+
+		if (s[strlen(s) - 1] == '\n')
+			s[strlen(s) - 1] = '\0';
+
+		if ((p1 = strchr(s, ' '))) {
+			p1[0] = '\0';
+		} else if ((p1 = strchr(s, '\t'))) {
+			p1[0] = '\0';
+		}
+
+		if (p1) {
+			p1++;
+
+			// Trim leading spaces
+			len = strlen(p1);
+			while (*p1 && len) {
+				if (*p1 == ' ')
+					p1++;
+				else
+					break;
+				len = strlen(p1);
+			}
+			if ((p2 = strchr(p1, ' '))) {
+				p2[0] = '\0';
+			} else if ((p2 = strstr(p1, "\r\n"))) {
+				p2[0] = '\0';
+			} else if ((p2 = strchr(p1, '\n'))) {
+				p2[0] = '\0';
+			}
+		}
+
+		if (p1 && p1[0] != '\0') {
+			/* Strip trailing spaces */
+
+			if ((strncmp(s, "#", 1)) != 0) {
+				//printf("Parsing token: %s, \n" "value: %s \n", s, p1);
+				opcode = config_parse_token(s, filename, linenum);
+
+				switch (opcode) {
+
+				case oLogFile:
+					strcpy(config.logfile, p1);
+					break;
+				case oMinSec:
+					sscanf(p1, "%d", &config.min_sec);
+					break;
+				case oMinSat:
+					sscanf(p1, "%d", &config.min_sat);
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
+}
+/** Uses getopt() to parse the command line and set configuration values
+ * also populates restartargv
+ */
+/*void
+parse_commandline(int argc, char **argv)
+{
+    int c,i;
+
+    s_config *config = config_get_config();
+
+    while (-1 != (c = getopt(argc, argv, "c:"))) {
+        switch (c) {
+
+        case 'c':
+            if (optarg) {
+                free(config->configfile);
+                config->configfile = safe_strdup(optarg);
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+}*/
 
 /* extract field (big-endian) ------------------------------------------------*/
 #ifdef IS_BIG_ENDIAN

@@ -3,14 +3,12 @@
 
 #include "common.h"
 #include "Gnss_nav.h"
+#include "util.h"
 
 using namespace std;
 
 void Usage(){
-	string str = "Usage:: ./Nav_Trans.exe Log_File Min_Time_Len Min_Sat_Num, Log_File Should Be Put In The Exe Dir";
-	cout << str << endl;
-	cout << endl;
-	str = "If U Run ./Nav_Trans.exe Log_File, It May Equal to ./Nav_Trans.exe Log_File 600 6";
+	string str = "Usage:: ./Nav_Trans.exe [config file (option)], the default config file --> RNME.conf, u can change by yourself.";
 	cout << str << endl;
 }
 
@@ -20,23 +18,22 @@ int main(int argc, char* argv[])
 {
 	int min_time_len,min_sat_num;
 	char *filename = NULL;
-	cout << "Hello Kids !!!" << endl;
-	if(argc != 4 && argc != 2){
+	s_config *config = config_get_config();
+	config_init();
+
+	if(argc != 1 && argc != 2){
 		Usage();
 		Sleep(10000);
 		exit(-1);
 	}
 	else if(argc == 2){
-		filename = argv[1];
-		min_time_len = MIN_LAST_SEC;
-		min_sat_num = MIN_SAT_SUM;
+		config->confile = argv[1];
 	}
-	else{
-		filename = argv[1];
-		min_time_len = atoi(argv[2]);
-		min_sat_num = atoi(argv[3]);
-	}
-	Gnss_nav trans(filename);
-	trans.Decode_Rec_Log(min_time_len, min_sat_num);
+
+	/* Initialize the config */
+	config_read(config->confile);
+
+	Gnss_nav trans(config->logfile);
+	trans.Decode_Rec_Log(config->min_sec, config->min_sat);
 	return 0;
 }

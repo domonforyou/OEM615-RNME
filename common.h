@@ -15,6 +15,7 @@
 #include <set>
 #include <map>
 #include <windows.h>
+#include <string.h>
 #include "stdafx.h"
 
 #define ll long long
