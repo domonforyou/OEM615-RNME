@@ -1,5 +1,6 @@
 # OEM615-RNME
-Raw Navigation Message Extraction from OEM615 Reciever Log File, including GPS, BDS, GLO. 
+Raw Navigation Message Extraction from OEM615 Reciever Log File, including GPS, BDS, GLO.
+Only test it in Windows. 
 
 ## OEM615 Reciever Log Type Selection
 - GPS: RAWGPSWORD
@@ -14,17 +15,24 @@ U must chang the log file suffix as one of below.
 - GLO: .glo
 - MIX: .mix (with some of above)
 
-## Usage
-./Nav_Trans.exe  Log_File  Min_Time_Len(sec)  Min_Sat_Num
+## Default Configuration File
+RNME.conf
 
-**example: ** ./Nav_Trans.exe GPS_BDS_GAL.mix 600 6
+## Usage
+./Nav_Trans.exe [config file (option)]
+The default config file --> RNME.conf, u can change by yourself.
+Executable file and the default config file shoude be put in same dir.
+
+**example:**  
+./Nav_Trans.exe 
+./Nav_Trans.exe test.conf
 
 ## Result Files
 - GPS: GPSNAV.txt
 - BDS: BDSNAV.txt
 - GLO: GLONAV.txt
 
-**example: ** prn#raw_nav_bin
+**example:**  prn#raw_nav_bin
 ```
 14#000011010010110000001011101110
 22#000011000101010001111010001001
